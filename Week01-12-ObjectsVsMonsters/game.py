@@ -24,7 +24,6 @@ class Game:
         self.background = load_sprite('bg2', alpha = False)
         self.hud = {'energy_back' :load_sprite('hud_energy_back'),
                     'energy_front':load_sprite('hud_energy_front'),
-                    'energy_bar'  :load_sprite('energy_bar'),
                    }   
 
         self.state = 'game'
