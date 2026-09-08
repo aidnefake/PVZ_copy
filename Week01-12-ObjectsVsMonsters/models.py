@@ -1,0 +1,27 @@
+from pygame.math import Vector2
+from utils import *
+from audio import SFX
+from fonts import FONTS,COLOURS
+
+class GameObject:
+    def __init__(self, position, sprite_name, velocity = Vector2(0), scale = 1, health = 0):
+        self.pos    = Vector2(position)
+        self.sprite = load_sprite(sprite_name, scale)
+        self.width  = self.sprite.get_width()
+        self.height = self.sprite.get_height()
+        self.vel    = Vector2(velocity)
+        self.scale  = scale
+        self.health = health
+
+    def draw(self, surface):
+        blit_pos = self.pos - Vector2(self.width/2, self.height/2)
+        surface.blit(self.sprite, blit_pos)
+    
+    def _move(self):
+        self.pos = self.pos + self.vel
+    
+    def update(self):
+        self._move()
+
+    def take_damage(self, amt):
+        self.health -= amt
