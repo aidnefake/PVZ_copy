@@ -34,6 +34,9 @@ class Game:
         self.ENERGY_COOLDOWN = 10
         self.energy_cd = self.ENERGY_COOLDOWN
 
+        self.unit1 = Unit((400,255), "microwave")
+        self.monster1 = Monster((400,255))
+
     def main_loop(self):
 
         while True:
@@ -50,6 +53,9 @@ class Game:
     def _process_game_logic(self):
         if self.state == 'game':
 
+            self.unit1.update([])
+            self.monster1.update()
+
             #energy gain
             if self.energy_cd == 0:
                 self.energy_cd = self.ENERGY_COOLDOWN
@@ -61,6 +67,9 @@ class Game:
 
     def _draw(self):
         self.screen.blit(self.background,(0,0))
+
+        self.unit1.draw(self.screen)
+        self.monster1.draw(self.screen)
 
         # draw HUD
         self.screen.blit(self.hud["energy_back"], (0,0))
