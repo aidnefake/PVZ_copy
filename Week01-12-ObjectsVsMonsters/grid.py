@@ -51,7 +51,7 @@ class Grid:
 
             #monster update
             for monster in self.monsters[row]:
-                monster.update()
+                monster.update(self.tiles[row], self.TILE_COORDS[row])
                 if monster.health <= 0:
                     dead_monsters.add(monster)
 
@@ -72,3 +72,34 @@ class Grid:
         for row in self.monsters:
             for monster in row:
                 monster.draw(surface)
+
+    def _in_tile(self, pos, row, col):
+        scale = 1 + 0.1 * row
+
+        return Vector2(pos).distance_to(self.TILE_COORDS[row][col]) < TILE_RADIUS*scale
+
+    def _deploy_unit(self, row, col, unit_type:str):
+        scale = 1 + 0.1 * row
+
+        match unit_type:
+            case "microwave":
+                self.tiles[row][col] = Unit(self.TILE_COORDS[row][col], unit_type, scale)
+            case "blender":
+                self.tiles[row][col] = Unit(self.TILE_COORDS[row][col], unit_type, scale)
+            case "toaster":
+                self.tiles[row][col] = Unit(self.TILE_COORDS[row][col], unit_type, scale)
+
+        SFX["deploy"].play()
+
+    def deploy_monster(self, row, monster_type:str):
+        scale = 1 + 0.1 * row
+
+        match monster_type:
+            case "fortified":
+                self.monsters[row].add(Monster((self.summon_x, self.TILE_COORDS[row][0][1]),
+                                               scale = scale,
+                                               sprites=("fortified_monster_a",
+                                                        "fortified_monster_b",
+                                                        "fortified_monster_eat")))
+            case "normal":
+                self.monsters[row].add(Monster((self.summon_x, self.TILE_COORDS[row][0][1]), scale = scale))

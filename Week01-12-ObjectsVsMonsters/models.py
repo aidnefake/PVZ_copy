@@ -67,6 +67,8 @@ class Monster(GameObject):
                  strength = 1, sprites = ("monster_a", "monster_b", "monster_eat")):
         super().__init__(position, sprites[0], Vector2(-speed,0), scale, health)
 
+        self.EAT_RANGE = 25
+
         self.sprites = {
             "a" : load_sprite(sprites[0], scale = scale),
             "b": load_sprite(sprites[1], scale=scale),
@@ -81,7 +83,20 @@ class Monster(GameObject):
         self.anim_frame = "a"
         self.state = "move"
 
-    def update(self):
+    def update(self, row, row_coords):
+        eat_tile = None
+        for tile in range(len(row)):
+            if row[tile] and abs(row_coords[tile][0] - self.pos[0]) < self.scale * self.EAT_RANGE:
+                self.state = "eat"
+                eat_tile = tile
+                break
+        else:
+            self.state = "move"
+
+
+        self.move_cd -= 1
+        self.anim_cd -= 1
+
         if self.state == "move":
             self.move_cd -= 1
             self.anim_cd -= 1
@@ -94,3 +109,29 @@ class Monster(GameObject):
                 self.anim_cd = self.ANIMATION_COOlDOWN
                 self.anim_frame = "b" if self.anim_frame == "a" else "a"
                 self.sprite = self.sprites[self.anim_frame]
+
+        if self.state == "eat":
+            if self.move_cd <= 0:
+                self.move_cd = self.MOVE_COOLDOWN
+                self._eat(row[eat_tile])
+
+            if self.anim_cd <= 0:
+                self.anim_cd = self.ANIMATION_COOlDOWN
+                self.anim_frame = "a" if self.anim_frame == "eat" else "eat"
+                self.sprite = self.sprites[self.anim_frame]
+
+                if self.sprite == "eat":
+                    SFX["chomp"].play()
+    def _eat(self, unit:Unit):
+        unit.take_damage(self.strength)
+
+class Projectiles(GameObject):
+    def __init__(self, position, sprite_name, target, strength, scale=1, lifespan=30):
+        velocity = (target.pos + target.vel * lifespan - position) / lifespan
+
+        super().__init__(position, sprite_name, velocity, scale)
+
+        self.target = target
+        self.strength = strength
+        self.lifespan = lifespan
+        self.elapsed = 0

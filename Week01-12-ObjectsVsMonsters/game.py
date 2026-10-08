@@ -5,6 +5,7 @@ from models import *
 from utils import *
 from fonts import FONTS, COLOURS
 from audio import SFX
+from grid import Grid
 
 
 class Game:
@@ -34,10 +35,18 @@ class Game:
         self.ENERGY_COOLDOWN = 10
         self.energy_cd = self.ENERGY_COOLDOWN
 
-        self.unit1 = Unit((400,255), "microwave")
-        self.monster1 = Monster((400,255))
+        GRID_WIDTH = 9
+        GRID_HEIGHT = 5
+
+        self.grid = Grid(GRID_WIDTH, GRID_HEIGHT, self.width)
 
     def main_loop(self):
+        self.grid.deploy_monster(1, "fortified")
+        self.grid.deploy_monster(3, "normal")
+        self.grid.deploy_monster(4, "normal")
+        self.grid._deploy_unit(0,0, "microwave")
+        self.grid._deploy_unit(1,2, "blender")
+
 
         while True:
             self._process_input()
@@ -52,14 +61,15 @@ class Game:
 
     def _process_game_logic(self):
         if self.state == 'game':
-
-            self.unit1.update([])
-            self.monster1.update()
-
             #energy gain
             if self.energy_cd == 0:
                 self.energy_cd = self.ENERGY_COOLDOWN
                 self.energy += 0.1
+                SFX["energy_gain"].play()
+
+            energy_mod = self.grid.update()
+            self.energy += energy_mod
+
             if self.energy < self.MAX_ENERGY:
                 self.energy_cd -= 1
             else:
@@ -68,8 +78,7 @@ class Game:
     def _draw(self):
         self.screen.blit(self.background,(0,0))
 
-        self.unit1.draw(self.screen)
-        self.monster1.draw(self.screen)
+        self.grid.draw(self.screen)
 
         # draw HUD
         self.screen.blit(self.hud["energy_back"], (0,0))
