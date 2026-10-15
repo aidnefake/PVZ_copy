@@ -30,12 +30,13 @@ class GameObject:
         self.health -= amt
 
 class Unit(GameObject):
-    def __init__(self, position, sprite_name, scale=1, health=100, attack_cooldown = 120):
+    def __init__(self, position, sprite_name, add_proj_callback, scale=1, health=100, attack_cooldown = 120):
         super().__init__(position, sprite_name, scale=scale,health=health)
         self.ATTACK_COOLDOWN = attack_cooldown
         self.HOP_COOLDOWN = 180
         self.atk_cd = 0
         self.hop_cd = self.HOP_COOLDOWN
+        self.add_proj_callback = add_proj_callback
         
     def update(self, monsters):
         super().update()
@@ -125,7 +126,7 @@ class Monster(GameObject):
     def _eat(self, unit:Unit):
         unit.take_damage(self.strength)
 
-class Projectiles(GameObject):
+class Projectile(GameObject):
     def __init__(self, position, sprite_name, target, strength, scale=1, lifespan=30):
         velocity = (target.pos + target.vel * lifespan - position) / lifespan
 
@@ -135,3 +136,63 @@ class Projectiles(GameObject):
         self.strength = strength
         self.lifespan = lifespan
         self.elapsed = 0
+
+    def update(self):
+        super().update()
+        self.elapsed += 1
+
+        if self.elapsed >= self.lifespan:
+            self.target.take_damage(self.strength)
+            SFX["impact"].play()
+
+class Blender(Unit):
+    def __init__(self, position, add_proj_callback, scale=1):
+        super().__init__(position, "blender", add_proj_callback, scale, health = 75)
+        self.strength = 15
+
+    def _activate(self, monsters):
+        in_range = [monster for monster in monsters if monster.pos[0] >= self.pos[0]]
+        closest = min(in_range, key=lambda monster: monster.pos[0], default=None)
+
+        if closest:
+            lifespan = (abs(closest.pos[0] - self.pos[0])/1000) * 120
+            self.add_proj_callback({Goo(self.pos + (0,-20), closest, self.strength, self.scale, lifespan)})
+            SFX["blender"].play()
+
+class Goo(Projectile):
+    def __init__(self, position, target, strength, scale=1, lifespan=30):
+        super().__init__(position, "goo", target, strength, scale,lifespan)
+
+class Toaster(Unit):
+    def __init__(self, position, add_proj_callback, scale=1):
+        super().__init__(position, "toaster", add_proj_callback, scale, health = 75)
+        self.strength = 8
+
+    def _activate(self, monsters):
+        in_range = [monster for monster in monsters if monster.pos[0] >= self.pos[0]]
+
+        if len(in_range) >0:
+            SFX["toaster"].play()
+
+        projectiles = set()
+        for monster in in_range:
+            #lifespan = (abs(monster.pos[0] - self.pos[0])/1000) * 120
+            projectiles |= {Toast(self.pos, monster, self.strength, self.scale)}
+
+        self.add_proj_callback(projectiles)
+
+class Toast(Projectile):
+    def __init__(self, position, target, strength, scale=1, lifespan=30):
+        super().__init__(position, "toast", target, strength, scale, lifespan)
+
+        self.gravity = 2
+        self.vel = Vector2(self.vel[0], -lifespan*self.gravity/2)
+
+    def update(self):
+        self._move()
+        self.elapsed += 1
+
+        self.vel += Vector2(0, self.gravity)
+
+        if self.elapsed >= self.lifespan:
+            self.target.take_damage(self.strength)

@@ -46,6 +46,7 @@ class Game:
         self.grid.deploy_monster(4, "normal")
         self.grid._deploy_unit(0,0, "microwave")
         self.grid._deploy_unit(1,2, "blender")
+        self.grid._deploy_unit(3, 1, "toaster")
 
 
         while True:
@@ -65,7 +66,6 @@ class Game:
             if self.energy_cd == 0:
                 self.energy_cd = self.ENERGY_COOLDOWN
                 self.energy += 0.1
-                SFX["energy_gain"].play()
 
             energy_mod = self.grid.update()
             self.energy += energy_mod
