@@ -95,7 +95,7 @@ class Grid:
 
         match unit_type:
             case "microwave":
-                self.tiles[row][col] = Unit(self.TILE_COORDS[row][col], unit_type, self.projectiles.update, scale)
+                self.tiles[row][col] = Microwave(self.TILE_COORDS[row][col], self.projectiles.update, scale)
             case "blender":
                 self.tiles[row][col] = Blender(self.TILE_COORDS[row][col], self.projectiles.update, scale)
             case "toaster":
@@ -115,3 +115,9 @@ class Grid:
                                                         "fortified_monster_eat")))
             case "normal":
                 self.monsters[row].add(Monster((self.summon_x, self.TILE_COORDS[row][0][1]), scale = scale))
+
+    def on_click(self, mouse_pos):
+        for row in self.tiles:
+            for unit in row:
+                if unit and unit.clicked(mouse_pos):
+                    return unit.on_clicked()

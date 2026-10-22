@@ -1,5 +1,6 @@
 from operator import pos
 from os import access
+from pydoc import text
 
 from pygame.math import Vector2
 from utils import *
@@ -29,12 +30,17 @@ class GameObject:
     def take_damage(self, amt):
         self.health -= amt
 
+    def clicked(self, mouse_pos):
+        hitbox = self.sprite.get_rect()
+        hitbox.center = self.pos
+        return hitbox.collidepoint(mouse_pos)
+
 class Unit(GameObject):
     def __init__(self, position, sprite_name, add_proj_callback, scale=1, health=100, attack_cooldown = 120):
         super().__init__(position, sprite_name, scale=scale,health=health)
         self.ATTACK_COOLDOWN = attack_cooldown
         self.HOP_COOLDOWN = 180
-        self.atk_cd = 0
+        self.atk_cd = self.ATTACK_COOLDOWN
         self.hop_cd = self.HOP_COOLDOWN
         self.add_proj_callback = add_proj_callback
         
@@ -176,8 +182,8 @@ class Toaster(Unit):
 
         projectiles = set()
         for monster in in_range:
-            #lifespan = (abs(monster.pos[0] - self.pos[0])/1000) * 120
-            projectiles |= {Toast(self.pos, monster, self.strength, self.scale)}
+            lifespan = (abs(monster.pos[0] - self.pos[0]+200)/1000) * 90
+            projectiles |= {Toast(self.pos, monster, self.strength, self.scale, lifespan)}
 
         self.add_proj_callback(projectiles)
 
@@ -185,7 +191,7 @@ class Toast(Projectile):
     def __init__(self, position, target, strength, scale=1, lifespan=30):
         super().__init__(position, "toast", target, strength, scale, lifespan)
 
-        self.gravity = 2
+        self.gravity = 0.5
         self.vel = Vector2(self.vel[0], -lifespan*self.gravity/2)
 
     def update(self):
@@ -196,3 +202,74 @@ class Toast(Projectile):
 
         if self.elapsed >= self.lifespan:
             self.target.take_damage(self.strength)
+
+class Microwave(Unit):
+    def __init__(self, position, add_proj_callback, scale=1, energy_gain=5):
+        super().__init__(position, "microwave", add_proj_callback, scale, health = 30, attack_cooldown= 500)
+        self.ready = False
+        self.glow_level = 0
+        self.MAX_GLOW = 5
+        self.glow = load_sprite("microwave_glow", scale)
+        self.GLOW_COOLDOWN = 10
+        self.glow_cd = self.GLOW_COOLDOWN
+        self.energy_gain =energy_gain
+
+    def update(self, monsters):
+        if not self.ready:
+            return super().update(monsters)
+        else:
+            self.glow_cd -= 1
+            if self.glow_cd <= 0:
+                self.glow_cd = self.GLOW_COOLDOWN
+                self.glow_level = (self.glow_level+1) % self.MAX_GLOW
+
+    def _activate(self, monsters):
+        if not self.ready:
+            self.ready = True
+            SFX["microwave"].play()
+
+    def on_clicked(self):
+        if self.ready:
+            self.ready = False
+            self.glow_level = 0
+            SFX["energy_gain"].play()
+            return self.energy_gain
+
+    def draw(self, surface):
+        blit_pos = self.pos - Vector2(self.width/2, self.height/2)
+        surface.blit(self.sprite, blit_pos)
+        for _ in range(self.glow_level):
+            surface.blit(self.glow, blit_pos)
+
+class Card(GameObject):
+    def __init__(self, position, card_type, cost):
+        super().__init__(position, "card")
+        self.card_type = card_type
+        self.unit = load_sprite(card_type, scale=0.75)
+        self.cost = cost
+        self.start_pos = Vector2(position)
+        self.selected = False
+
+    def update(self, mouse_pos):
+        if self.selected:
+            self._move(mouse_pos)
+
+    def _move(self, mouse_pos):
+        self.pos = mouse_pos
+
+    def reset(self):
+        self.selected = False
+        self.pos = self.start_pos
+
+    def draw(self, surface, energy):
+        super().draw(surface)
+        unit_pos = self.pos - Vector2(self.unit.get_width()/2, self.unit.get_height()/2)
+        text_pos = self.pos - Vector2(self.width()/3, self.height/3)
+
+        surface.blit(self.unit, unit_pos)
+        if energy < self.cost:
+            col = COLOURS["grey_purple"]
+        else:
+            col = COLOURS["grey_purple"]
+
+        write(surface, str(self.cost), text_pos, FONTS["tiny"], col, align = "centre")
