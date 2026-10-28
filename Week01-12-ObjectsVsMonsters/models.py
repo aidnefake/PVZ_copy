@@ -69,6 +69,9 @@ class Unit(GameObject):
     def _activate(self, monsters):
         pass
 
+    def on_click(self):
+        return
+
 class Monster(GameObject):
     def __init__(self, position, scale=1, health = 100, speed = 1, move_cooldown = 3,
                  strength = 1, sprites = ("monster_a", "monster_b", "monster_eat")):
@@ -228,7 +231,7 @@ class Microwave(Unit):
             self.ready = True
             SFX["microwave"].play()
 
-    def on_clicked(self):
+    def on_click(self):
         if self.ready:
             self.ready = False
             self.glow_level = 0
@@ -264,12 +267,12 @@ class Card(GameObject):
     def draw(self, surface, energy):
         super().draw(surface)
         unit_pos = self.pos - Vector2(self.unit.get_width()/2, self.unit.get_height()/2)
-        text_pos = self.pos - Vector2(self.width()/3, self.height/3)
+        text_pos = self.pos - Vector2(self.width/3, self.height/3)
 
         surface.blit(self.unit, unit_pos)
         if energy < self.cost:
-            col = COLOURS["grey_purple"]
+            col = COLOURS["white_purple"]
         else:
-            col = COLOURS["grey_purple"]
+            col = COLOURS["white"]
 
         write(surface, str(self.cost), text_pos, FONTS["tiny"], col, align = "centre")
