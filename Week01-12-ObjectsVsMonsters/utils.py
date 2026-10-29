@@ -25,7 +25,7 @@ def write(surface, msg, pos, font, colour, align = 'left'):
      '''
      text = font.render(msg, True, colour)
      text_box = text.get_rect()
-     if align == 'center':
+     if align == 'centre':
           text_box.center = pos
      elif align == 'left':
           text_box.topleft = pos
