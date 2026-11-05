@@ -130,3 +130,11 @@ class Grid:
                     return True
 
         return False
+
+    def game_over(self):
+        for row in self.monsters:
+            for monster in row:
+                if monster.pos[0]<0:
+                    return True
+
+        return False

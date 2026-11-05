@@ -53,3 +53,33 @@ class Level:
 
         self.wave_complete = False
         self.level_complete = False
+
+    def update(self, grid):
+        if not self.level_complete:
+            if self.initial_cd >0:
+                self.initial_cd-=1
+                return False
+
+            monsters_dead = True
+            for row in grid.monsters:
+                if len(row) > 0:
+                    monsters_dead = True
+
+            if self.wave_complete and monsters_dead:
+                if len(self.waves) <= 0:
+                    self.level_complete = True
+                    return True
+                else:
+                    self.cur_wave = self.waves[0]
+                    self.waves = self.waves[1:]
+                    self.wave_complete = False
+
+            self.wave_complete = self.cur_wave.update(grid)
+            return False
+
+monster_types = {"normal": 1, "fortified": 2}
+LEVEL1 = Level([Wave(i + 1, monster_types, 10, 180, []) for i in range(5)], 600)
+LEVEL2 = Level([Wave(2*i + 1, monster_types, 10, 180, []) for i in range(5)], 600)
+LEVEL3 = Level([Wave((i + 1)**1.5, monster_types, 10, 180, []) for i in range(5)], 600)
+
+LEVELS = [LEVEL1,LEVEL2,LEVEL3]

@@ -1,5 +1,3 @@
-from re import search
-
 import pygame
 import random
 
@@ -8,10 +6,12 @@ from utils import *
 from fonts import FONTS, COLOURS
 from audio import SFX
 from grid import Grid
+from level import LEVELS
 
 
 class Game:
     def __init__(self):
+        print("helli")
 
         # pygame setup:
         pygame.init()
@@ -29,19 +29,20 @@ class Game:
                     'energy_front':load_sprite('hud_energy_front'),
                    }   
 
-        self.state = 'game'
+        self.state = 'title'
 
         # energy gain vars
         self.MAX_ENERGY = 100
-        self.energy = 10
+        self.STARTING_ENERGY = 10
+        self.energy = self.STARTING_ENERGY
         self.ENERGY_COOLDOWN = 10
         self.energy_cd = self.ENERGY_COOLDOWN
         self.mouse_down = False
 
-        GRID_WIDTH = 9
-        GRID_HEIGHT = 5
+        self.GRID_WIDTH = 9
+        self.GRID_HEIGHT = 5
 
-        self.grid = Grid(GRID_WIDTH, GRID_HEIGHT, self.width)
+        self.grid = Grid(self.GRID_WIDTH, self.GRID_HEIGHT, self.width)
 
         CARD_X = 155
         CARD_Y = 39
@@ -52,15 +53,10 @@ class Game:
             Card((CARD_X + 2*CARD_SPACING, CARD_Y), "toaster", 25),
         ]
 
+        self.levels = LEVELS
+        self.current_level = 0
+
     def main_loop(self):
-        self.grid.deploy_monster(1, "fortified")
-        self.grid.deploy_monster(3, "normal")
-        self.grid.deploy_monster(4, "normal")
-        self.grid._deploy_unit(0,0, "microwave")
-        self.grid._deploy_unit(1,2, "blender")
-        self.grid._deploy_unit(3, 1, "toaster")
-
-
         while True:
             self._process_input()
             self._process_game_logic()
@@ -72,36 +68,60 @@ class Game:
             if event.type == pygame.QUIT:
                 quit()
         if self.state == "game":
-            mouse = pygame.mouse.get_pressed()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    quit()
 
-            if mouse[0]:
-                for card in self.cards:
-                    if not self.mouse_down and card.clicked(pygame.mouse.get_pos()):
-                        card.selected = True
-                        break
+            keys = pygame.key.get_pressed()
 
-                self.mouse_down = True
+            if self.state == "title":
+                if keys[pygame.K_SPACE]:
+                    self.state = "pause"
 
-                energy_mod = self.grid.on_click(pygame.mouse.get_pos())
-                if energy_mod:
-                    self.energy+=energy_mod
+            if self.state == "pause":
+                if keys[pygame.K_RETURN]:
+                    self.state = "game"
 
-            if self.mouse_down and not mouse[0]:
-                self.mouse_down = False
+            if self.state in ["win", "game over"]:
+                if keys[pygame.K_r]:
+                    self.current_level = 0
+                    self._reset()
+                    self.state="pause"
+
+            if self.state == "game":
+                if keys[pygame.K_ESCAPE] or keys[pygame.K_p]:
+                    self.state = "pause"
+
+                mouse = pygame.mouse.get_pressed()
+
+                if mouse[0]:
+                    for card in self.cards:
+                        if not self.mouse_down and card.clicked(pygame.mouse.get_pos()):
+                            card.selected = True
+                            break
+
+                    self.mouse_down = True
+
+                    energy_mod = self.grid.on_click(pygame.mouse.get_pos())
+                    if energy_mod:
+                        self.energy+=energy_mod
+
+                if self.mouse_down and not mouse[0]:
+                    self.mouse_down = False
 
 
-                #card code
-                for card in self.cards:
-                    if card.selected:
-                        if self.energy < card.cost:
-                            SFX["error"].play()
-                        else:
-                            played = self.grid.play_card(card)
-                            if played:
-                                self.energy -= card.cost
+                    #card code
+                    for card in self.cards:
+                        if card.selected:
+                            if self.energy < card.cost:
+                                SFX["error"].play()
+                            else:
+                                played = self.grid.play_card(card)
+                                if played:
+                                    self.energy -= card.cost
 
-                        card.reset()
-                        break
+                            card.reset()
+                            break
 
 
     def _process_game_logic(self):
@@ -121,6 +141,19 @@ class Game:
 
             for card in self.cards:
                 card.update(pygame.mouse.get_pos())
+
+            level_complete = self.levels[self.current_level].update(self.grid)
+
+            if level_complete:
+                self.current_level += 1
+                self._reset()
+                self.state = "game"
+                if self.current_level >= len(self.levels):
+                    self.state = "win"
+
+            if self.grid.game_over():
+                self._reset()
+                self.state = "game over"
 
     def _draw(self):
         self.screen.blit(self.background,(0,0))
@@ -142,4 +175,48 @@ class Game:
         for card in self.cards:
             card.draw(self.screen, self.energy)
 
+        # win screen, title screen, game over, pause screen
+
+        if self.state == 'title':
+            alpha_fill(self.screen, COLOURS['grey'], 200)
+
+            write(self.screen, "Objects", (self.width / 20, self.height / 8), FONTS['title'], COLOURS['magenta'],
+                  align='midleft')
+            write(self.screen, "vs.", (self.width / 2, 3 * self.height / 8), FONTS['title'], COLOURS['white'],
+                  align='center')
+            write(self.screen, "Monsters", (19 * self.width / 20, 5 * self.height / 8), FONTS['title'],
+                  COLOURS['green'], align='midright')
+
+            write(self.screen, "Press SPACE to start...", (self.width / 2, 7 * self.height / 8), FONTS['normal'],
+                  COLOURS['white'], align='center')
+
+        if self.state == 'game over':
+            alpha_fill(self.screen, COLOURS['grey'], 200)
+            write(self.screen, "Game Over", (self.width / 2, self.height / 2), FONTS['title'], COLOURS['green'],
+                  align='center')
+
+            write(self.screen, "Press R to restart...", (self.width / 2, 3 * self.height / 4), FONTS['normal'],
+                  COLOURS['white'], align='center')
+
+        if self.state == 'win':
+            alpha_fill(self.screen, COLOURS['grey'], 200)
+            write(self.screen, "You Win!", (self.width / 2, self.height / 2), FONTS['title'], COLOURS['magenta'],
+                  align='center')
+
+            write(self.screen, "Press R to restart...", (self.width / 2, 3 * self.height / 4), FONTS['normal'],
+                  COLOURS['white'], align='center')
+
+        if self.state == 'pause':
+            alpha_fill(self.screen, COLOURS['grey'], 200)
+            # Level is 0-indexed
+            write(self.screen, f"Level {self.current_level + 1}", (self.width / 2, self.height / 2), FONTS['title'],
+                  COLOURS['white'], align='center')
+
+            write(self.screen, "Press ENTER to continue...", (self.width / 2, 3 * self.height / 4), FONTS['normal'],
+                  COLOURS['white'], align='center')
+
         pygame.display.update()
+
+    def _reset(self):
+        self.energy = self.STARTING_ENERGY
+        self.grid = Grid(self.GRID_WIDTH, self.GRID_HEIGHT, self.width)
