@@ -18,7 +18,7 @@ class Wave:
     def _generate_wave(self):
         options = list(self.monster_types.keys())
 
-        while self.summon_points>0:
+        while self.summon_points>=1:
             sel = random.choice(options) #selection
             if self.monster_types[sel] <= self.summon_points:
                 self.monsters.append(sel)
@@ -39,7 +39,7 @@ class Wave:
         return False
 
     def _deploy(self, grid):
-        row = random.randint(1,grid.num_rows) - 1
+        row = random.randint(1,grid.rows) - 1
         monster = self.monsters.pop()
         grid.deploy_monster(row,monster)
 
@@ -63,7 +63,7 @@ class Level:
             monsters_dead = True
             for row in grid.monsters:
                 if len(row) > 0:
-                    monsters_dead = True
+                    monsters_dead = False
 
             if self.wave_complete and monsters_dead:
                 if len(self.waves) <= 0:

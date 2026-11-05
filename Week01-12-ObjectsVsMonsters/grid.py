@@ -16,7 +16,7 @@ from pygame.math import Vector2
 TILE_RADIUS = 25
 
 class Grid:
-    def __init__(self, rows, cols, summon_x):
+    def __init__(self, cols, rows, summon_x):
         self.tiles = [[None for _ in range(cols)] for _ in range(rows)]
 
         self.TILE_COORDS = [[(118 + 70 * i, 105) for i in range(cols)],

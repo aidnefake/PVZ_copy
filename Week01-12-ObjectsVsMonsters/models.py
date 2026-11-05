@@ -157,7 +157,7 @@ class Projectile(GameObject):
 class Blender(Unit):
     def __init__(self, position, add_proj_callback, scale=1):
         super().__init__(position, "blender", add_proj_callback, scale, health = 75)
-        self.strength = 15
+        self.strength = 25
 
     def _activate(self, monsters):
         in_range = [monster for monster in monsters if monster.pos[0] >= self.pos[0]]
@@ -175,7 +175,7 @@ class Goo(Projectile):
 class Toaster(Unit):
     def __init__(self, position, add_proj_callback, scale=1):
         super().__init__(position, "toaster", add_proj_callback, scale, health = 75)
-        self.strength = 8
+        self.strength = 15
 
     def _activate(self, monsters):
         in_range = [monster for monster in monsters if monster.pos[0] >= self.pos[0]]
