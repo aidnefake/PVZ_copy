@@ -1,3 +1,4 @@
+from cmath import inf
 from operator import pos
 from os import access
 from pydoc import text
@@ -36,14 +37,15 @@ class GameObject:
         return hitbox.collidepoint(mouse_pos)
 
 class Unit(GameObject):
-    def __init__(self, position, sprite_name, add_proj_callback, scale=1, health=100, attack_cooldown = 120):
+    def __init__(self, position, sprite_name, add_proj_callback, scale=1, health=100,
+                 attack_cooldown = 120):
         super().__init__(position, sprite_name, scale=scale,health=health)
         self.ATTACK_COOLDOWN = attack_cooldown
         self.HOP_COOLDOWN = 180
         self.atk_cd = self.ATTACK_COOLDOWN
         self.hop_cd = self.HOP_COOLDOWN
         self.add_proj_callback = add_proj_callback
-        
+
     def update(self, monsters):
         super().update()
 
@@ -209,22 +211,19 @@ class Toast(Projectile):
 class Microwave(Unit):
     def __init__(self, position, add_proj_callback, scale=1, energy_gain=5):
         super().__init__(position, "microwave", add_proj_callback, scale, health = 30, attack_cooldown= 500)
+        self.sprites = {
+            "closed": load_sprite("microwave", scale= scale),
+            "open": load_sprite("microwave_open", scale=scale)
+        }
         self.ready = False
-        self.glow_level = 0
-        self.MAX_GLOW = 5
-        self.glow = load_sprite("microwave_glow", scale)
-        self.GLOW_COOLDOWN = 10
-        self.glow_cd = self.GLOW_COOLDOWN
         self.energy_gain =energy_gain
 
     def update(self, monsters):
         if not self.ready:
+            self.sprite = self.sprites["closed"]
             return super().update(monsters)
         else:
-            self.glow_cd -= 1
-            if self.glow_cd <= 0:
-                self.glow_cd = self.GLOW_COOLDOWN
-                self.glow_level = (self.glow_level+1) % self.MAX_GLOW
+            self.sprite = self.sprites["open"]
 
     def _activate(self, monsters):
         if not self.ready:
@@ -234,15 +233,45 @@ class Microwave(Unit):
     def on_click(self):
         if self.ready:
             self.ready = False
-            self.glow_level = 0
             SFX["energy_gain"].play()
             return self.energy_gain
 
-    def draw(self, surface):
-        blit_pos = self.pos - Vector2(self.width/2, self.height/2)
-        surface.blit(self.sprite, blit_pos)
-        for _ in range(self.glow_level):
-            surface.blit(self.glow, blit_pos)
+class Oven(Unit):
+    def __init__(self, position, range, scale=1, energy_gain=15):
+        super().__init__(position, "microwave_open", scale, health = 75)
+        self.sprites = {
+            "open": load_sprite("microwave_open", scale= scale),
+            "closed": load_sprite("microwave", scale=scale),
+            "ready": load_sprite("blender", scale=scale)
+        }
+        self.strength = inf
+        self.state = "open"
+        self.range = range
+        self.energy_gain = energy_gain
+
+    def update(self, monsters):
+        if self.state == "closed":
+            self.sprite = self.sprites["closed"]
+            return super().update(monsters)
+        elif self.state == "open":
+            self.sprite = self.sprites["open"]
+            in_range = [monster for monster in monsters if 0 < monster.pos[0] - self.pos[0] < self.range]
+            if len(in_range) > 0:
+                closest = min(in_range, key=lambda monster: monster.pos[0], default=None)
+                if closest:
+                    closest.take_damage(self.strength)
+                    self.state = "closed"
+
+    def _activate(self, monsters):
+        self.state = "ready"
+        self.sprite = self.sprites["ready"]
+
+    def on_click(self):
+        if self.state == "ready":
+            self.state = "open"
+            self.sprite = self.sprites["open"]
+            SFX["energy_gain"].play()
+            return self.energy_gain
 
 class Card(GameObject):
     def __init__(self, position, card_type, cost):

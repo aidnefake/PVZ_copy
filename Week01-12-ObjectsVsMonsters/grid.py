@@ -100,6 +100,8 @@ class Grid:
                 self.tiles[row][col] = Blender(self.TILE_COORDS[row][col], self.projectiles.update, scale)
             case "toaster":
                 self.tiles[row][col] = Toaster(self.TILE_COORDS[row][col], self.projectiles.update, scale)
+            case "oven":
+                self.tiles[row][col] = Oven(self.TILE_COORDS[row][col], scale)
 
         SFX["deploy"].play()
 

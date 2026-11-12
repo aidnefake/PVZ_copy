@@ -49,6 +49,7 @@ class Game:
             Card((CARD_X, CARD_Y), "microwave", 10),
             Card((CARD_X + 1*CARD_SPACING, CARD_Y), "blender", 20),
             Card((CARD_X + 2*CARD_SPACING, CARD_Y), "toaster", 25),
+            Card((CARD_X + 3*CARD_SPACING, CARD_Y), "oven", 0),
         ]
 
         self.levels = LEVELS.copy()
@@ -62,7 +63,7 @@ class Game:
             self._process_input()
             self._process_game_logic()
             self._draw()
-            self.clock.tick(480)
+            self.clock.tick(60)
 
     def _process_input(self):
         for event in pygame.event.get():
