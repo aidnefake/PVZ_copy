@@ -14,12 +14,17 @@ SFX = {'microwave'   : mixer.Sound(path.join(SFX_PATH, 'microwave.mp3')),
        'chomp'       : mixer.Sound(path.join(SFX_PATH, 'chomp.mp3')),
        'growl'       : mixer.Sound(path.join(SFX_PATH, 'growl.mp3')),
        'impact'      : mixer.Sound(path.join(SFX_PATH, 'impact.mp3')),
+       'open_door': mixer.Sound(path.join(SFX_PATH, 'open_door.mp3')),
+       'door_shut': mixer.Sound(path.join(SFX_PATH, 'door_shut.mp3')),
+       'oven_ding': mixer.Sound(path.join(SFX_PATH, 'oven_ding.mp3')),
       }
 
 SFX['toaster'].set_volume(0.10)
 SFX['blender'].set_volume(0.10)
 SFX['energy_gain'].set_volume(0.25)
-SFX['deploy'].set_volume(0.1)
+SFX['deploy'].set_volume(0.25)
 SFX['growl'].set_volume(0.25)
+SFX['oven_ding'].set_volume(0.25)
+SFX['door_shut'].set_volume(0.25)
 
 mixer.music.load(path.join(SFX_PATH,'music.mp3'))

@@ -101,7 +101,9 @@ class Grid:
             case "toaster":
                 self.tiles[row][col] = Toaster(self.TILE_COORDS[row][col], self.projectiles.update, scale)
             case "oven":
-                self.tiles[row][col] = Oven(self.TILE_COORDS[row][col], scale)
+                self.tiles[row][col] = Oven(self.TILE_COORDS[row][col], scale, range=self.TILE_COORDS[row][1][0]-self.TILE_COORDS[row][0][0])
+            case "fridge":
+                self.tiles[row][col] = Fridge(self.TILE_COORDS[row][col], scale)
 
         SFX["deploy"].play()
 

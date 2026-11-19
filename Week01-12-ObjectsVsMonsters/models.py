@@ -210,7 +210,7 @@ class Toast(Projectile):
 
 class Microwave(Unit):
     def __init__(self, position, add_proj_callback, scale=1, energy_gain=5):
-        super().__init__(position, "microwave", add_proj_callback, scale, health = 30, attack_cooldown= 500)
+        super().__init__(position, "microwave", add_proj_callback, scale, health = 30, attack_cooldown= 540)
         self.sprites = {
             "closed": load_sprite("microwave", scale= scale),
             "open": load_sprite("microwave_open", scale=scale)
@@ -237,16 +237,17 @@ class Microwave(Unit):
             return self.energy_gain
 
 class Oven(Unit):
-    def __init__(self, position, range, scale=1, energy_gain=15):
-        super().__init__(position, "microwave_open", scale, health = 75)
+    def __init__(self, position, scale=1, energy_gain=10, range=0):
+        super().__init__(position, "microwave_open", scale, health = 75, attack_cooldown=1200)
         self.sprites = {
-            "open": load_sprite("microwave_open", scale= scale),
-            "closed": load_sprite("microwave", scale=scale),
-            "ready": load_sprite("blender", scale=scale)
+            "open": load_sprite("oven_open", scale= scale),
+            "closed": load_sprite("oven", scale=scale),
+            "ready": load_sprite("oven_ready", scale=scale)
         }
-        self.strength = inf
+        self.strength = 999999999
         self.state = "open"
         self.range = range
+        print(range)
         self.energy_gain = energy_gain
 
     def update(self, monsters):
@@ -261,10 +262,13 @@ class Oven(Unit):
                 if closest:
                     closest.take_damage(self.strength)
                     self.state = "closed"
+                    SFX["door_shut"].play()
 
     def _activate(self, monsters):
         self.state = "ready"
         self.sprite = self.sprites["ready"]
+        SFX["oven_ding"].play()
+        SFX["open_door"].play()
 
     def on_click(self):
         if self.state == "ready":
@@ -272,6 +276,10 @@ class Oven(Unit):
             self.sprite = self.sprites["open"]
             SFX["energy_gain"].play()
             return self.energy_gain
+
+class Fridge(Unit):
+    def __init__(self, position, scale):
+        super().__init__(position, "fridge", scale, health = 750)
 
 class Card(GameObject):
     def __init__(self, position, card_type, cost):
