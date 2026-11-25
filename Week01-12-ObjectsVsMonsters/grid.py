@@ -48,7 +48,7 @@ class Grid:
                     if energy_mod:
                         energy_mods +=energy_mod
 
-                    if self.tiles[row][col].health<=0:
+                    if self.tiles[row][col].dead(self.monsters[row]):
                         self.tiles[row][col] = None
 
             #monster update

@@ -73,6 +73,9 @@ class Unit(GameObject):
 
     def on_click(self):
         return
+    
+    def dead(self, monsters):
+        return self.health <= 0
 
 class Monster(GameObject):
     def __init__(self, position, scale=1, health = 100, speed = 1, move_cooldown = 3,
@@ -80,6 +83,8 @@ class Monster(GameObject):
         super().__init__(position, sprites[0], Vector2(-speed,0), scale, health)
 
         self.EAT_RANGE = 25
+
+        self.thaw = 0
 
         self.sprites = {
             "a" : load_sprite(sprites[0], scale = scale),
@@ -96,46 +101,54 @@ class Monster(GameObject):
         self.state = "move"
 
     def update(self, row, row_coords):
-        eat_tile = None
-        for tile in range(len(row)):
-            if row[tile] and abs(row_coords[tile][0] - self.pos[0]) < self.scale * self.EAT_RANGE:
-                self.state = "eat"
-                eat_tile = tile
-                break
-        else:
-            self.state = "move"
+        if not self.thaw>0:
+            eat_tile = None
+            for tile in range(len(row)):
+                if row[tile] and abs(row_coords[tile][0] - self.pos[0]) < self.scale * self.EAT_RANGE:
+                    self.state = "eat"
+                    eat_tile = tile
+                    break
+            else:
+                self.state = "move"
 
 
-        self.move_cd -= 1
-        self.anim_cd -= 1
-
-        if self.state == "move":
             self.move_cd -= 1
             self.anim_cd -= 1
 
-            if self.move_cd <= 0:
-                self.move_cd = self.MOVE_COOLDOWN
-                self._move()
-            
-            if self.anim_cd <= 0:
-                self.anim_cd = self.ANIMATION_COOlDOWN
-                self.anim_frame = "b" if self.anim_frame == "a" else "a"
-                self.sprite = self.sprites[self.anim_frame]
+            if self.state == "move":
+                self.move_cd -= 1
+                self.anim_cd -= 1
 
-        if self.state == "eat":
-            if self.move_cd <= 0:
-                self.move_cd = self.MOVE_COOLDOWN
-                self._eat(row[eat_tile])
+                if self.move_cd <= 0:
+                    self.move_cd = self.MOVE_COOLDOWN
+                    self._move()
+                
+                if self.anim_cd <= 0:
+                    self.anim_cd = self.ANIMATION_COOlDOWN
+                    self.anim_frame = "b" if self.anim_frame == "a" else "a"
+                    self.sprite = self.sprites[self.anim_frame]
 
-            if self.anim_cd <= 0:
-                self.anim_cd = self.ANIMATION_COOlDOWN
-                self.anim_frame = "a" if self.anim_frame == "eat" else "eat"
-                self.sprite = self.sprites[self.anim_frame]
+            if self.state == "eat":
+                if self.move_cd <= 0:
+                    self.move_cd = self.MOVE_COOLDOWN
+                    self._eat(row[eat_tile])
 
-                if self.sprite == "eat":
-                    SFX["chomp"].play()
+                if self.anim_cd <= 0:
+                    self.anim_cd = self.ANIMATION_COOlDOWN
+                    self.anim_frame = "a" if self.anim_frame == "eat" else "eat"
+                    self.sprite = self.sprites[self.anim_frame]
+
+                    if self.sprite == "eat":
+                        SFX["chomp"].play()
+        else:
+            self.thaw -= 1
+            self.sprite.set_colorkey((0,0,0,100))
+
     def _eat(self, unit:Unit):
         unit.take_damage(self.strength)
+    
+    def _move(self):
+        self.pos = self.pos + (Vector2(0,0) if self.thaw>0 else self.vel)
 
 class Projectile(GameObject):
     def __init__(self, position, sprite_name, target, strength, scale=1, lifespan=30):
@@ -279,7 +292,14 @@ class Oven(Unit):
 
 class Fridge(Unit):
     def __init__(self, position, scale):
-        super().__init__(position, "fridge", scale, health = 750)
+        super().__init__(position, "fridge", scale, health = 10)
+    
+    def dead(self, monsters):
+        dead = super().dead(monsters)
+        if dead:
+            for monster in monsters:
+                monster.thaw = 300
+        return dead
 
 class Card(GameObject):
     def __init__(self, position, card_type, cost):
