@@ -78,7 +78,7 @@ class Level:
             return False
 
 monster_types = {"normal": 1, "fortified": 2}
-LEVEL1 = Level([Wave(i + 1, monster_types, 10, 180, []) for i in range(5)], 600)
+LEVEL1 = Level([Wave(i + 1, monster_types, 1, 1, []) for i in range(5)], 600)
 LEVEL2 = Level([Wave(2*i + 1, monster_types, 10, 180, []) for i in range(5)], 600)
 LEVEL3 = Level([Wave((i + 1)**1.5, monster_types, 10, 180, []) for i in range(5)], 600)
 

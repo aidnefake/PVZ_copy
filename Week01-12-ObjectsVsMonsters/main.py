@@ -5,6 +5,5 @@ if __name__ == '__main__':
     game.main_loop()
 
 # to-do list:
-# add fridge
 # add animations
 # add spinning toast

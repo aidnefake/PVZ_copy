@@ -3,6 +3,7 @@ from operator import pos
 from os import access
 from pydoc import text
 
+import pygame.color
 from pygame.math import Vector2
 from utils import *
 from audio import SFX
@@ -78,9 +79,9 @@ class Unit(GameObject):
         return self.health <= 0
 
 class Monster(GameObject):
-    def __init__(self, position, scale=1, health = 100, speed = 1, move_cooldown = 3,
+    def __init__(self, position, scale=1, speed_mod = 1, health = 100, speed = 1, move_cooldown = 3,
                  strength = 1, sprites = ("monster_a", "monster_b", "monster_eat")):
-        super().__init__(position, sprites[0], Vector2(-speed,0), scale, health)
+        super().__init__(position, sprites[0], Vector2(-(speed*speed_mod),0), scale, health)
 
         self.EAT_RANGE = 25
 
@@ -100,8 +101,11 @@ class Monster(GameObject):
         self.anim_frame = "a"
         self.state = "move"
 
+        self.applied_tint = False
+
     def update(self, row, row_coords):
         if not self.thaw>0:
+            self.applied_tint = False
             eat_tile = None
             for tile in range(len(row)):
                 if row[tile] and abs(row_coords[tile][0] - self.pos[0]) < self.scale * self.EAT_RANGE:
@@ -142,7 +146,11 @@ class Monster(GameObject):
                         SFX["chomp"].play()
         else:
             self.thaw -= 1
-            self.sprite.set_colorkey((0,0,0,100))
+            if not self.applied_tint:
+                tinted_sprite = self.sprite.copy()
+                tinted_sprite.fill(COLOURS["cyan"], special_flags=pygame.BLEND_RGB_ADD)
+                self.applied_tint = True
+                self.sprite = tinted_sprite
 
     def _eat(self, unit:Unit):
         unit.take_damage(self.strength)
@@ -208,15 +216,20 @@ class Toaster(Unit):
 class Toast(Projectile):
     def __init__(self, position, target, strength, scale=1, lifespan=30):
         super().__init__(position, "toast", target, strength, scale, lifespan)
+        self.og_sprite = self.sprite.copy()
 
         self.gravity = 0.5
         self.vel = Vector2(self.vel[0], -lifespan*self.gravity/2)
+        self.angle = 0
 
     def update(self):
         self._move()
         self.elapsed += 1
 
+        self.angle = (self.angle+30)%360
+
         self.vel += Vector2(0, self.gravity)
+        self.sprite = pygame.transform.rotate(self.og_sprite, self.angle)
 
         if self.elapsed >= self.lifespan:
             self.target.take_damage(self.strength)
@@ -292,11 +305,12 @@ class Oven(Unit):
 
 class Fridge(Unit):
     def __init__(self, position, scale):
-        super().__init__(position, "fridge", scale, health = 10)
+        super().__init__(position, "fridge", scale, health = 500)
     
     def dead(self, monsters):
         dead = super().dead(monsters)
         if dead:
+            SFX["freeze"].play()
             for monster in monsters:
                 monster.thaw = 300
         return dead

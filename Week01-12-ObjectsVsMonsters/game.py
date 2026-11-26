@@ -51,7 +51,7 @@ class Game:
             Card((CARD_X + 1*CARD_SPACING, CARD_Y), "blender", 20),
             Card((CARD_X + 2*CARD_SPACING, CARD_Y), "toaster", 25),
             Card((CARD_X + 3*CARD_SPACING, CARD_Y), "oven", 20),
-            Card((CARD_X + 4*CARD_SPACING, CARD_Y), "fridge", 0),
+            Card((CARD_X + 4*CARD_SPACING, CARD_Y), "fridge", 20),
         ]
 
         self.levels = LEVELS.copy()

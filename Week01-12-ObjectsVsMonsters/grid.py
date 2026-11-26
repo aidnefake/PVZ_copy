@@ -109,16 +109,18 @@ class Grid:
 
     def deploy_monster(self, row, monster_type:str):
         scale = 1 + 0.1 * row
+        tile_width = self.TILE_COORDS[row][1][0]-self.TILE_COORDS[row][0][0]
+        speed_mod = tile_width/(self.TILE_COORDS[0][1][0]-self.TILE_COORDS[0][0][0])
 
         match monster_type:
             case "fortified":
-                self.monsters[row].add(Monster((self.summon_x, self.TILE_COORDS[row][0][1]),
-                                               scale = scale,
+                self.monsters[row].add(Monster(Vector2(self.TILE_COORDS[row][self.cols-1])+(2*tile_width,0),
+                                               scale = scale, speed_mod= speed_mod,
                                                sprites=("fortified_monster_a",
                                                         "fortified_monster_b",
                                                         "fortified_monster_eat")))
             case "normal":
-                self.monsters[row].add(Monster((self.summon_x, self.TILE_COORDS[row][0][1]), scale = scale))
+                self.monsters[row].add(Monster(Vector2(self.TILE_COORDS[row][self.cols-1])+(2*tile_width,0), scale = scale, speed_mod= speed_mod))
 
     def on_click(self, mouse_pos):
         for row in self.tiles:

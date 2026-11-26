@@ -17,7 +17,8 @@ SFX = {'microwave'   : mixer.Sound(path.join(SFX_PATH, 'microwave.mp3')),
        'open_door': mixer.Sound(path.join(SFX_PATH, 'open_door.mp3')),
        'door_shut': mixer.Sound(path.join(SFX_PATH, 'door_shut.mp3')),
        'oven_ding': mixer.Sound(path.join(SFX_PATH, 'oven_ding.mp3')),
-      }
+       'freeze': mixer.Sound(path.join(SFX_PATH, 'freeze.mp3')),
+       }
 
 SFX['toaster'].set_volume(0.10)
 SFX['blender'].set_volume(0.10)
